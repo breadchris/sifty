@@ -1,6 +1,6 @@
 # Sifty
 
-s23
+s23d
 **S**tore **I**nformation, **F**ilter **T**ext **Y**ourself (work in progress acronym)
 
 Inspired by [Pocket](https://getpocket.com/) and [Shiori](https://github.com/go-shiori/shiori)
