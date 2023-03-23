@@ -45,6 +45,6 @@ func WatchForUrls(notesDir string) error {
 }
 
 func processURL(url string) {
-	fmt.Println("Processing URL:", url)
-	// do something with the URL
+	fmt.Println("Processing Host:", url)
+	// do something with the Host
 }

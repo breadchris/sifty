@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package lunamind;
+option go_package = "./gen/api";
+
+service API {
+  rpc Save(Content) returns (ContentID);
+  rpc Search(Query) returns (Results);
+}
+
+message Query {
+  string query = 1;
+}
+
+message Results {
+  repeated Content content = 1;
+}
+
+message File {
+  bytes data = 1;
+}
+
+message ContentID {
+  int32 id = 1;
+}
+
+message Metadata {
+}
+
+// Content has data and metadata
+message Content {
+  bytes data = 1;
+  Metadata metadata = 2;
+}

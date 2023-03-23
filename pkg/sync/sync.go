@@ -1,10 +1,7 @@
 package sync
 
 import (
-	"context"
 	"fmt"
-	"github.com/breadchris/sifty/backend/gen"
-	"github.com/breadchris/sifty/backend/pkg/ml"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -86,21 +83,8 @@ func WatchForAudioFiles(notesDir string) error {
 		return err
 	}
 
-	client, err := ml.NewPythonClient()
-	if err != nil {
-		return err
-	}
-
 	for _, file := range files {
 		println("getting transcript for file", file)
-		fullPath := filepath.Join(dir, file)
-		res, err := client.Transcribe(context.Background(), &gen.TranscribeRequest{
-			File: fullPath,
-		})
-		if err != nil {
-			println(err)
-		}
-		println(res.Transcription)
 	}
 	return nil
 }
