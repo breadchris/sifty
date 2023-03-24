@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"github.com/breadchris/sifty/pkg/api"
 	"github.com/breadchris/sifty/pkg/pipeline/capture"
 	"github.com/breadchris/sifty/pkg/pipeline/normalize"
 	"github.com/breadchris/sifty/pkg/pipeline/text"
@@ -11,6 +12,22 @@ import (
 	"os"
 	"path/filepath"
 )
+
+func NewServeCommand(httpServer api.HTTPServer) *cli.Command {
+	return &cli.Command{
+		Name:  "api",
+		Usage: "API server",
+		Flags: []cli.Flag{},
+		Subcommands: []*cli.Command{
+			{
+				Name: "serve",
+				Action: func(context *cli.Context) error {
+					return httpServer.Start()
+				},
+			},
+		},
+	}
+}
 
 func NewSyncCommand() *cli.Command {
 	return &cli.Command{

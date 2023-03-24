@@ -6,5 +6,6 @@ var (
 	ProviderSet = wire.NewSet(
 		NewFolderCache,
 		wire.Bind(new(Cache), new(*FolderCache)),
+		NewBucket,
 	)
 )

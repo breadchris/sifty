@@ -2,13 +2,13 @@ package model
 
 import (
 	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
 
 type Content struct {
-	gorm.Model
+	Base
 
-	Type     string `json:"type"`
-	Metadata datatypes.JSON
-	Data     string `json:"data"`
+	Type              int32 `json:"type"`
+	Metadata          datatypes.JSON
+	Data              string              `json:"data"`
+	NormalizedContent []NormalizedContent `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }

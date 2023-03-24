@@ -1,0 +1,4 @@
+openai:
+  api_key: test
+api:
+  local: true

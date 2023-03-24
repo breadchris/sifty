@@ -7,10 +7,13 @@
 package cli
 
 import (
+	"github.com/breadchris/sifty/pkg/api"
 	"github.com/breadchris/sifty/pkg/config"
 	"github.com/breadchris/sifty/pkg/pipeline/normalize"
 	"github.com/breadchris/sifty/pkg/pipeline/text"
-	python2 "github.com/breadchris/sifty/pkg/python"
+	"github.com/breadchris/sifty/pkg/python"
+	"github.com/breadchris/sifty/pkg/store"
+	"github.com/breadchris/sifty/pkg/store/db"
 	"github.com/urfave/cli/v2"
 )
 
@@ -21,11 +24,27 @@ func Wire() (*cli.App, error) {
 	if err != nil {
 		return nil, err
 	}
-	pythonConfig, err := python2.NewConfig(provider)
+	apiConfig, err := api.NewConfig(provider)
 	if err != nil {
 		return nil, err
 	}
-	pythonClient, err := python2.NewPythonClient(pythonConfig)
+	folderCache, err := store.NewFolderCache()
+	if err != nil {
+		return nil, err
+	}
+	dbStore, err := db.NewDB(folderCache)
+	if err != nil {
+		return nil, err
+	}
+	files, err := store.NewBucket(folderCache)
+	if err != nil {
+		return nil, err
+	}
+	pythonConfig, err := python.NewConfig(provider)
+	if err != nil {
+		return nil, err
+	}
+	pythonClient, err := python.NewPythonClient(pythonConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -33,10 +52,12 @@ func Wire() (*cli.App, error) {
 	if err != nil {
 		return nil, err
 	}
+	apiServer := api.NewAPIServer(dbStore, files, audioNormalizer)
+	apihttpServer := api.NewAPIHTTPServer(apiConfig, apiServer)
 	summarizer, err := text.NewSummarizer(pythonClient)
 	if err != nil {
 		return nil, err
 	}
-	app := NewApp(audioNormalizer, summarizer)
+	app := NewApp(apihttpServer, audioNormalizer, summarizer)
 	return app, nil
 }

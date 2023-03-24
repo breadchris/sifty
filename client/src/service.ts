@@ -1,8 +1,8 @@
-import { BackendClientJSON } from "./rpc/ctfg.twirp";
+import { APIClientJSON } from "./rpc/api.twirp";
 import { FetchRPC } from "twirp-ts";
 
-export const ctfg = new BackendClientJSON(
+export const api = new APIClientJSON(
 	FetchRPC({
-		baseUrl: "/twirp/backend",
+		baseUrl: "http://localhost:8080/api",
 	}),
 );

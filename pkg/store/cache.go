@@ -1,11 +1,13 @@
 package store
 
 import (
-	"fmt"
+	"github.com/pkg/errors"
 	"os"
 	"os/user"
 	"path"
 )
+
+const name = ".lunabrain"
 
 type Cache interface {
 	GetFile(name string) (string, error)
@@ -16,37 +18,42 @@ type FolderCache struct {
 	dir string
 }
 
-func createCacheFolder(name string) error {
-	// Get the current user
-	u, err := user.Current()
-	if err != nil {
-		return fmt.Errorf("could not get current user: %v", err)
-	}
-
-	// Create the .sifty folder in the user's home directory
-	path := u.HomeDir + "/." + name
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		if err := os.Mkdir(path, 0700); err != nil {
-			return fmt.Errorf("could not create .%s folder: %v", name, err)
-		}
-	}
-	return nil
-}
-
 func (c *FolderCache) GetFile(name string) (string, error) {
 	return path.Join(c.dir, name), nil
 }
 
 func (c *FolderCache) GetFolder(name string) (string, error) {
-	return path.Join(c.dir, name), nil
+	p := path.Join(c.dir, name)
+	return p, ensureDirExists(p)
 }
 
-func NewFolderCache(name string) (*FolderCache, error) {
-	if err := createCacheFolder(name); err != nil {
+func ensureDirExists(p string) error {
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		if err := os.Mkdir(p, 0700); err != nil {
+			return errors.Wrapf(err, "could not create folder: %v", name)
+		}
+	}
+	return nil
+}
+
+func createLocalDir() (string, error) {
+	// Get the current user
+	u, err := user.Current()
+	if err != nil {
+		return "", errors.Wrapf(err, "could not get current user")
+	}
+
+	p := path.Join(u.HomeDir, "/", name)
+	return p, ensureDirExists(p)
+}
+
+func NewFolderCache() (*FolderCache, error) {
+	folder, err := createLocalDir()
+	if err != nil {
 		return nil, err
 	}
 
 	return &FolderCache{
-		dir: name,
+		dir: folder,
 	}, nil
 }

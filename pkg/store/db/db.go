@@ -2,9 +2,13 @@ package db
 
 import (
 	"encoding/json"
+	genapi "github.com/breadchris/sifty/gen/api"
 	"github.com/breadchris/sifty/pkg/model"
+	"github.com/breadchris/sifty/pkg/store"
+	"github.com/gofrs/uuid"
 	"github.com/google/wire"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
@@ -13,35 +17,67 @@ var (
 	ProviderSet = wire.NewSet(
 		NewConfig,
 		NewDB,
+		wire.Bind(new(Store), new(*dbStore)),
 	)
 )
 
 type Store interface {
-	SaveContent(contentType, data string, metadata json.RawMessage) (uint, error)
+	SaveContent(contentType genapi.ContentType, data string, metadata json.RawMessage) (uuid.UUID, error)
+	SaveNormalizedContent(contentID uuid.UUID, data string) (uuid.UUID, error)
+	GetStoredContent() ([]model.Content, error)
 }
 
-type store struct {
+type dbStore struct {
 	db *gorm.DB
 }
 
-func NewDB() (*store, error) {
-	db, err := connect()
+func NewDB(cache *store.FolderCache) (*dbStore, error) {
+	db, err := connect(cache)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "could not connect to database: %v", err)
+		return nil, errors.Wrapf(err, "could not connect to database: %v", err)
 	}
-	return &store{db: db}, nil
+
+	// TODO breadchris migration should be done via a migration tool, no automigrate
+	log.Info().Msg("migrating database")
+	err = db.AutoMigrate(&model.Content{}, &model.NormalizedContent{})
+	if err != nil {
+		return nil, errors.Wrapf(err, "could not migrate database: %v", err)
+	}
+	return &dbStore{db: db}, nil
 }
 
-func (s *store) SaveContent(contentType, data string, metadata json.RawMessage) (uint, error) {
+func (s *dbStore) GetStoredContent() ([]model.Content, error) {
+	var content []model.Content
+	res := s.db.Model(&model.Content{}).Preload("NormalizedContent").Find(&content)
+	if res.Error != nil {
+		return nil, errors.Wrapf(res.Error, "could not get content: %v", res.Error)
+	}
+	return content, nil
+}
+
+func (s *dbStore) SaveContent(contentType genapi.ContentType, data string, metadata json.RawMessage) (uuid.UUID, error) {
 	content := model.Content{
-		Type:     contentType,
+		Type:     int32(contentType),
 		Data:     data,
 		Metadata: datatypes.JSON(metadata),
 	}
 	res := s.db.Create(&content)
 
 	if res.Error != nil {
-		return 0, errors.WithMessagef(res.Error, "could not save content: %v", res.Error)
+		return uuid.UUID{}, errors.Wrapf(res.Error, "could not save content: %v", res.Error)
 	}
 	return content.ID, nil
+}
+
+func (s *dbStore) SaveNormalizedContent(contentID uuid.UUID, data string) (uuid.UUID, error) {
+	normalContent := model.NormalizedContent{
+		Data:      data,
+		ContentID: contentID,
+	}
+	res := s.db.Create(&normalContent)
+
+	if res.Error != nil {
+		return uuid.UUID{}, errors.Wrapf(res.Error, "could not save normalContent: %v", res.Error)
+	}
+	return normalContent.ID, nil
 }

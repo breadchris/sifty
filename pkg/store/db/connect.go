@@ -1,13 +1,14 @@
 package db
 
 import (
+	"github.com/breadchris/sifty/pkg/store"
 	"github.com/glebarez/sqlite"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"os"
 )
 
-func connect() (*gorm.DB, error) {
+func connect(cache *store.FolderCache) (*gorm.DB, error) {
 	dbType := os.Getenv("DB_TYPE")
 	dsn := os.Getenv("DB_DSN")
 
@@ -15,7 +16,11 @@ func connect() (*gorm.DB, error) {
 	if dbType == "postgres" {
 		openedDb = postgres.Open(dsn)
 	} else {
-		openedDb = sqlite.Open("store.db")
+		dbPath, err := cache.GetFile("db.sqlite")
+		if err != nil {
+			return nil, err
+		}
+		openedDb = sqlite.Open(dbPath)
 	}
 
 	db, err := gorm.Open(openedDb, &gorm.Config{})

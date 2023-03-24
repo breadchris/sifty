@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/breadchris/sifty/pkg/api"
 	"github.com/breadchris/sifty/pkg/openai"
 	"github.com/breadchris/sifty/pkg/python"
 	"github.com/rs/zerolog/log"
@@ -10,13 +11,14 @@ import (
 	"path"
 )
 
-const configDir = "config/lunamind/"
+const configDir = "config/lunabrain/"
 
-const siftyConfigDir = ".lunamind.yaml"
+const siftyConfigDir = ".lunabrain.yaml"
 
 type Config struct {
 	Python python.Config `yaml:"python"`
 	OpenAI openai.Config `yaml:"openai"`
+	API    api.Config    `yaml:"api"`
 }
 
 func newDefaultConfig() Config {
@@ -25,7 +27,11 @@ func newDefaultConfig() Config {
 			Host: "localhost:50051",
 		},
 		OpenAI: openai.Config{
-			APIKey: "${LUNAMIND_OPENAI_API_KEY}",
+			APIKey: "${LUNABRAIN_OPENAI_API_KEY}",
+		},
+		API: api.Config{
+			Port:  "8080",
+			Local: false,
 		},
 	}
 }
