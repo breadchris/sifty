@@ -10,6 +10,7 @@ import (
 	"github.com/breadchris/sifty/pkg/api"
 	"github.com/breadchris/sifty/pkg/config"
 	"github.com/breadchris/sifty/pkg/pipeline/normalize"
+	"github.com/breadchris/sifty/pkg/pipeline/scrape"
 	"github.com/breadchris/sifty/pkg/pipeline/text"
 	"github.com/breadchris/sifty/pkg/python"
 	"github.com/breadchris/sifty/pkg/store"
@@ -52,12 +53,25 @@ func Wire() (*cli.App, error) {
 	if err != nil {
 		return nil, err
 	}
-	apiServer := api.NewAPIServer(dbStore, files, audioNormalizer)
-	apihttpServer := api.NewAPIHTTPServer(apiConfig, apiServer)
+	scrapeConfig, err := scrape.NewConfig(provider)
+	if err != nil {
+		return nil, err
+	}
+	scraper := scrape.NewScraper(scrapeConfig)
+	urlNormalizer, err := normalize.NewURLNormalizer(pythonClient, scraper, dbStore)
+	if err != nil {
+		return nil, err
+	}
+	normalizer, err := normalize.NewNormalizer(audioNormalizer, urlNormalizer, dbStore)
+	if err != nil {
+		return nil, err
+	}
 	summarizer, err := text.NewSummarizer(pythonClient)
 	if err != nil {
 		return nil, err
 	}
-	app := NewApp(apihttpServer, audioNormalizer, summarizer)
+	server := api.NewAPIServer(dbStore, files, normalizer, summarizer)
+	apihttpServer := api.NewAPIHTTPServer(apiConfig, server)
+	app := NewApp(apihttpServer, normalizer, summarizer)
 	return app, nil
 }

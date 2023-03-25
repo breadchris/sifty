@@ -2,3 +2,5 @@ openai:
   api_key: test
 api:
   local: true
+youtube:
+  api_key: AIzaSyDBVXGGGUP6wAv_nXcEM3hmVbQ7RPqQqtgAIzaSyDBVXGGGUP6wAv_nXcEM3hmVbQ7RPqQqtg

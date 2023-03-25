@@ -68,7 +68,7 @@ func NewCaptureCommand(normalizer normalize.Normalizer) *cli.Command {
 
 			if ctx.Bool("normalize") {
 				log.Info().Msg("normalizing")
-				transcript, err := normalizer.Normalize(fileName)
+				transcript, err := normalizer.NormalizeFile(fileName, "audio")
 				if err != nil {
 					return err
 				}
@@ -79,7 +79,7 @@ func NewCaptureCommand(normalizer normalize.Normalizer) *cli.Command {
 	}
 }
 
-func NewNormalizeCommand(normalizer *normalize.AudioNormalizer) *cli.Command {
+func NewNormalizeCommand(normalizer normalize.Normalizer) *cli.Command {
 	return &cli.Command{
 		Name:  "normalize",
 		Usage: "Noramlize a note.",
@@ -97,7 +97,7 @@ func NewNormalizeCommand(normalizer *normalize.AudioNormalizer) *cli.Command {
 				return err
 			}
 
-			transcript, err := normalizer.Normalize(absPath)
+			transcript, err := normalizer.NormalizeFile(absPath, "audio")
 			if err != nil {
 				return err
 			}
@@ -115,7 +115,7 @@ func NewNormalizeCommand(normalizer *normalize.AudioNormalizer) *cli.Command {
 	}
 }
 
-func NewTextCommand(summarizer *text.Summarizer) *cli.Command {
+func NewTextCommand(summarizer text.Summarizer) *cli.Command {
 	return &cli.Command{
 		Name:  "text",
 		Usage: "Process text.",
@@ -130,7 +130,7 @@ func NewTextCommand(summarizer *text.Summarizer) *cli.Command {
 						return err
 					}
 
-					transcript, err := summarizer.Summarize(absPath)
+					transcript, err := summarizer.SummarizeFile(absPath)
 					if err != nil {
 						return err
 					}

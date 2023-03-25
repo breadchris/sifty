@@ -6,6 +6,20 @@
 	import AudioRecorder from "../components/AudioRecorder.svelte";
 	import {clips} from "../store/content";
 	import {onMount} from "svelte";
+    import { Select, Label } from 'flowbite-svelte';
+
+	const inputTypeLookup = {
+		"text": ContentType.TEXT,
+		"audio": ContentType.AUDIO,
+		"url": ContentType.URL,
+	}
+
+	let selected;
+	let inputTypes = [
+		{value:"text", name: "Text"},
+		{value:"audio", name: "Audio"},
+		{value:"url", name: "URL"},
+	]
 
 	let media = []
 	let mediaRecorder = null;
@@ -37,6 +51,7 @@
 				content.push(c);
 			});
 			content = content.reverse();
+			console.log(content);
 			storedContent.set(content);
 		} catch (e) {
 			console.error(e);
@@ -53,7 +68,7 @@
 		try {
 			const contentID = await api.Save({
 				data: encoder.encode($content),
-				type: ContentType.TEXT,
+				type: selected === "text" ? ContentType.TEXT : ContentType.URL,
 				metadata: {},
 				createdAt: new Date().toTimeString()
 			});
@@ -82,14 +97,28 @@
 </script>
 
 <section>
-	<label for="content-input">Content</label>
-	<ButtonGroup class="w-full">
-		<Input id="content-input" type="text" bind:value={$content} />
-		<Button color="blue" on:click={saveContent}>Save</Button>
-	</ButtonGroup>
+	<div class="grid grid-cols-4 gap-4 mb-4">
+		<div class="col-span-1">
+			<Label for="countries">Select an option</Label>
+			<Select id="countries" class="mt-2" bind:value={selected} placeholder="">
+				{#each inputTypes as {value, name}}
+					<option {value}>{name}</option>
+				{/each}
+			</Select>
+		</div>
+		<div class="col-span-3">
+			<Label for="content-input">Content</Label>
+			<ButtonGroup class="w-full mt-2">
+				<Input id="content-input" type="text" bind:value={$content} />
+				<Button color="blue" on:click={saveContent}>Save</Button>
+			</ButtonGroup>
+		</div>
+	</div>
 
-	<AudioRecorder />
-	<Button color="blue" on:click={saveRecording}>Save</Button>
+	{#if selected === "audio"}
+		<AudioRecorder />
+		<Button color="blue" on:click={saveRecording}>Save</Button>
+	{/if}
 
 	<Timeline>
 		{#each $storedContent as item}
@@ -108,6 +137,19 @@
 							No Normalization
 						{/if}
 						<audio src={item.url} controls/>
+					</p>
+				</TimelineItem>
+			{:else if item.type === ContentType.URL}
+				<TimelineItem title="URL" date="March 2022">
+					<p>
+						<a href="{new TextDecoder().decode(item.data)}">{new TextDecoder().decode(item.data)}</a>
+					</p>
+					<p class="text-base font-normal text-gray-500 dark:text-gray-400">
+						{#if item.normal}
+							{item.normal}
+						{:else}
+							No Normalization
+						{/if}
 					</p>
 				</TimelineItem>
 			{/if}

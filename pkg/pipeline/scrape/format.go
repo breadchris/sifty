@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func normalizeReferenceContent(content string) (string, error) {
+func NormalizeContent(content string) (string, error) {
 	contentReader := strings.NewReader(content)
 	doc, err := goquery.NewDocumentFromReader(contentReader)
 	if err == nil {

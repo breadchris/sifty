@@ -109,7 +109,11 @@ export enum ContentType {
     /**
      * @generated from protobuf enum value: AUDIO = 1;
      */
-    AUDIO = 1
+    AUDIO = 1,
+    /**
+     * @generated from protobuf enum value: URL = 2;
+     */
+    URL = 2
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class Query$Type extends MessageType<Query> {

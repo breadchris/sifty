@@ -24,6 +24,11 @@ class PythonStub(object):
                 request_serializer=python__pb2.SummarizeRequest.SerializeToString,
                 response_deserializer=python__pb2.SummarizeResponse.FromString,
                 )
+        self.YoutubeTranscript = channel.unary_unary(
+                '/python.Python/YoutubeTranscript',
+                request_serializer=python__pb2.Video.SerializeToString,
+                response_deserializer=python__pb2.Transcript.FromString,
+                )
 
 
 class PythonServicer(object):
@@ -41,6 +46,12 @@ class PythonServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def YoutubeTranscript(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_PythonServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -53,6 +64,11 @@ def add_PythonServicer_to_server(servicer, server):
                     servicer.Summarize,
                     request_deserializer=python__pb2.SummarizeRequest.FromString,
                     response_serializer=python__pb2.SummarizeResponse.SerializeToString,
+            ),
+            'YoutubeTranscript': grpc.unary_unary_rpc_method_handler(
+                    servicer.YoutubeTranscript,
+                    request_deserializer=python__pb2.Video.FromString,
+                    response_serializer=python__pb2.Transcript.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -95,5 +111,22 @@ class Python(object):
         return grpc.experimental.unary_unary(request, target, '/python.Python/Summarize',
             python__pb2.SummarizeRequest.SerializeToString,
             python__pb2.SummarizeResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def YoutubeTranscript(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/python.Python/YoutubeTranscript',
+            python__pb2.Video.SerializeToString,
+            python__pb2.Transcript.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

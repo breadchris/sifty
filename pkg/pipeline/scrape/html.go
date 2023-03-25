@@ -2,6 +2,7 @@ package scrape
 
 import (
 	"context"
+	"github.com/pkg/errors"
 	"io"
 	"net/http"
 	"time"
@@ -13,30 +14,30 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-type ScrapeResponse struct {
+type Response struct {
 	Title       string
 	Content     string
 	ContentType string
 }
 
-func (p *scraper) scrapeContent(url string) (*ScrapeResponse, error) {
+func (p *scraper) scrapeContent(url string) (*Response, error) {
 	// if there are no browser domains set or the url contains one of the browser domains, scrape with chrome
 	shouldScrapeWithBrowser := len(p.browserDomains) == 0
 	if shouldScrapeWithBrowser {
-		resp, err := p.ScrapeURLWithChrome(url)
-		if err != nil {
-			log.Warn().
-				Err(err).
-				Str("url", url).
-				Msg("Failed to scrape Host with Chrome")
-			return p.scrapeContentWithHTTPClient(url)
-		}
-		return resp, nil
+		//resp, err := p.ScrapeURLWithChrome(url)
+		//if err != nil {
+		//	log.Warn().
+		//		Err(err).
+		//		Str("url", url).
+		//		Msg("Failed to scrape Host with Chrome")
+		//	return p.scrapeContentWithHTTPClient(url)
+		//}
+		return &Response{}, nil
 	}
 	return p.scrapeContentWithHTTPClient(url)
 }
 
-func (p *scraper) scrapeContentWithHTTPClient(url string) (*ScrapeResponse, error) {
+func (p *scraper) scrapeContentWithHTTPClient(url string) (*Response, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		log.Error().
@@ -63,7 +64,7 @@ func (p *scraper) scrapeContentWithHTTPClient(url string) (*ScrapeResponse, erro
 	}
 
 	// TODO parse header out of respBody
-	return &ScrapeResponse{
+	return &Response{
 		Title:       "",
 		Content:     string(respBody),
 		ContentType: resp.Header.Get("Content-Type"),
@@ -126,24 +127,31 @@ func whenPromptedLoginToProxy(ctx context.Context, username, password string) {
 	})
 }
 
-func (p *scraper) ScrapeURLWithChrome(url string) (*ScrapeResponse, error) {
+func (p *scraper) ScrapeWithChrome(url string) (*Response, error) {
 	o := chromedp.DefaultExecAllocatorOptions[:]
-	if p.deps.Proxy.Host != "" {
+	if p.config.Proxy.Host != "" {
 		o = append(o,
-			chromedp.ProxyServer(p.deps.Proxy.Host),
+			chromedp.ProxyServer(p.config.Proxy.Host),
 		)
 	}
 
-	cx, cancel := chromedp.NewExecAllocator(context.Background(), o...)
+	o = append(o,
+		chromedp.Flag("headless", true),
+		chromedp.Flag("disable-gpu", true),
+		chromedp.Flag("no-sandbox", true),
+	)
+
+	cx, cancel := chromedp.NewExecAllocator(
+		context.Background(), o...)
 	defer cancel()
 
 	ctx, cancel := chromedp.NewContext(
 		cx,
-		chromedp.WithLogf(log.Printf),
+		chromedp.WithDebugf(log.Printf),
 	)
 	defer cancel()
 
-	whenPromptedLoginToProxy(ctx, p.deps.Proxy.Username, p.deps.Proxy.Password)
+	//whenPromptedLoginToProxy(ctx, p.config.Proxy.Username, p.config.Proxy.Password)
 
 	timeoutCtx, timeoutCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer timeoutCancel()
@@ -155,21 +163,21 @@ func (p *scraper) ScrapeURLWithChrome(url string) (*ScrapeResponse, error) {
 		title string
 	)
 	err := chromedp.Run(timeoutCtx,
-		fetch.Enable().WithHandleAuthRequests(true),
-		navigateWithError(url),
-		chromedp.Sleep(2*time.Second),
+		//fetch.Enable().WithHandleAuthRequests(true),
+		//navigateWithError(url),
+		chromedp.Navigate(url),
+		chromedp.Sleep(1*time.Second),
 		chromedp.OuterHTML("html", &html),
 		chromedp.Title(&title),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to scrape Host with Chrome")
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to scrape Host with Chrome: %s", url)
 	}
 
 	log.Debug().
 		Float64("duration", time.Since(start).Seconds()).
 		Msg("Scraped Host with Chrome")
-	return &ScrapeResponse{
+	return &Response{
 		Title:       title,
 		Content:     html,
 		ContentType: "text/html",

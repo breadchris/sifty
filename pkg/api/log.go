@@ -2,8 +2,8 @@ package api
 
 import (
 	"context"
+	"github.com/rs/zerolog/log"
 	"github.com/twitchtv/twirp"
-	"log"
 )
 
 func NewLoggingServerHooks() *twirp.ServerHooks {
@@ -12,16 +12,17 @@ func NewLoggingServerHooks() *twirp.ServerHooks {
 			return ctx, nil
 		},
 		RequestRouted: func(ctx context.Context) (context.Context, error) {
-			method, _ := twirp.MethodName(ctx)
-			log.Println("Method: " + method)
+			//method, _ := twirp.MethodName(ctx)
 			return ctx, nil
 		},
 		Error: func(ctx context.Context, twerr twirp.Error) context.Context {
-			log.Println("Error: " + string(twerr.Msg()))
+			log.Error().
+				Stack().
+				Err(twerr).
+				Msgf("error when handling request")
 			return ctx
 		},
 		ResponseSent: func(ctx context.Context) {
-			log.Println("Response Sent (error or success)")
 		},
 	}
 }

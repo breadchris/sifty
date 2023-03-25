@@ -5,7 +5,7 @@ import (
 	genapi "github.com/breadchris/sifty/gen/api"
 	"github.com/breadchris/sifty/pkg/model"
 	"github.com/breadchris/sifty/pkg/store"
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"github.com/google/wire"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -24,6 +24,7 @@ var (
 type Store interface {
 	SaveContent(contentType genapi.ContentType, data string, metadata json.RawMessage) (uuid.UUID, error)
 	SaveNormalizedContent(contentID uuid.UUID, data string) (uuid.UUID, error)
+	SaveLocatedContent(contentID uuid.UUID, data string) (uuid.UUID, error)
 	GetStoredContent() ([]model.Content, error)
 }
 
@@ -39,7 +40,7 @@ func NewDB(cache *store.FolderCache) (*dbStore, error) {
 
 	// TODO breadchris migration should be done via a migration tool, no automigrate
 	log.Info().Msg("migrating database")
-	err = db.AutoMigrate(&model.Content{}, &model.NormalizedContent{})
+	err = db.AutoMigrate(&model.Content{}, &model.NormalizedContent{}, &model.LocatedContent{})
 	if err != nil {
 		return nil, errors.Wrapf(err, "could not migrate database: %v", err)
 	}
@@ -72,6 +73,19 @@ func (s *dbStore) SaveContent(contentType genapi.ContentType, data string, metad
 func (s *dbStore) SaveNormalizedContent(contentID uuid.UUID, data string) (uuid.UUID, error) {
 	normalContent := model.NormalizedContent{
 		Data:      data,
+		ContentID: contentID,
+	}
+	res := s.db.Create(&normalContent)
+
+	if res.Error != nil {
+		return uuid.UUID{}, errors.Wrapf(res.Error, "could not save normalContent: %v", res.Error)
+	}
+	return normalContent.ID, nil
+}
+
+func (s *dbStore) SaveLocatedContent(contentID uuid.UUID, data string) (uuid.UUID, error) {
+	normalContent := model.LocatedContent{
+		Data:      &data,
 		ContentID: contentID,
 	}
 	res := s.db.Create(&normalContent)

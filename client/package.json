@@ -6,7 +6,7 @@
     "scripts": {
         "start": "node esbuild.mjs",
         "build": "BUILD=true node esbuild.mjs",
-        "generate": "protoc -I ../proto --plugin=protoc-gen-ts=\"./node_modules/.bin/protoc-gen-ts\" --plugin=protoc-gen-twirp_ts=\"./node_modules/.bin/protoc-gen-twirp_ts\" --ts_opt=client_none --ts_opt=generate_dependencies --ts_out=src/rpc --twirp_ts_out=src/rpc api.proto",
+        "generate": "./scripts/generate.sh",
         "validate": "svelte-check"
     },
     "devDependencies": {

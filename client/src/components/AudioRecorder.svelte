@@ -2,11 +2,13 @@
   import {Button} from "flowbite-svelte";
   import {clips} from "../store/content";
   import {blobToUint8Array} from "../util/blob";
+  import {writable} from "svelte/store";
 
   let stream;
   let mediaRecorder;
   let recordButton;
   let chunks = [];
+  let recording = writable(false);
 
   async function onStop(e) {
     console.log("recorder stopped");
@@ -41,22 +43,28 @@
   function record() {
     console.log("recorder started");
     mediaRecorder.start();
+    $recording = true;
   }
   function stop() {
     mediaRecorder.stop();
     console.log(mediaRecorder.state);
     console.log("recorder stopped");
+    $recording = false;
   }
 </script>
 
 <div class="wrapper">
   <section class="main-controls">
-    <canvas class="visualizer" height="60px" />
     <div id="buttons">
       <Button class="record" on:click={record} bind:this={recordButton}>
           Record
       </Button>
       <Button class="stop" on:click={stop}>Stop</Button>
+      {#if $recording}
+        <p>
+          Recording...
+        </p>
+      {/if}
     </div>
   </section>
 
@@ -73,10 +81,6 @@
 <style>
   .main-controls {
     padding: 0.5rem 0;
-  }
-  canvas {
-    display: block;
-    margin-bottom: 0.5rem;
   }
   /* Make the clips use as much space as possible, and
  * also show a scrollbar when there are too many clips to show

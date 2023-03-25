@@ -23,7 +23,7 @@ func Wire() (*cli.App, error) {
 		python.ProviderSet,
 		store.ProviderSet,
 		db.ProviderSet,
-		normalize.NewAudioNormalizer,
-		text.NewSummarizer,
+		normalize.ProviderSet,
+		text.ProviderSet,
 	))
 }

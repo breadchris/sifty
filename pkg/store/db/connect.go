@@ -20,7 +20,7 @@ func connect(cache *store.FolderCache) (*gorm.DB, error) {
 		if err != nil {
 			return nil, err
 		}
-		openedDb = sqlite.Open(dbPath)
+		openedDb = sqlite.Open(dbPath + "?cache=shared&mode=rwc")
 	}
 
 	db, err := gorm.Open(openedDb, &gorm.Config{})

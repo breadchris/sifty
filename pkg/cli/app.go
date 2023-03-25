@@ -9,8 +9,8 @@ import (
 
 func NewApp(
 	httpServer api.HTTPServer,
-	normalizer *normalize.AudioNormalizer,
-	summarizer *text.Summarizer,
+	normalizer normalize.Normalizer,
+	summarizer text.Summarizer,
 ) *cli.App {
 	return &cli.App{
 		Name:  "lunabrain",

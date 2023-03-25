@@ -1,7 +1,7 @@
 package model
 
 import (
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"time"
 )
@@ -16,10 +16,6 @@ type Base struct {
 
 // BeforeCreate will set a UUID.
 func (b *Base) BeforeCreate(tx *gorm.DB) error {
-	uuid, err := uuid.NewV4()
-	if err != nil {
-		return err
-	}
-	b.ID = uuid
+	b.ID = uuid.New()
 	return nil
 }

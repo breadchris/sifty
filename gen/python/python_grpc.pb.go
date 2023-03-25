@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type PythonClient interface {
 	Transcribe(ctx context.Context, in *TranscribeRequest, opts ...grpc.CallOption) (*TranscribeResponse, error)
 	Summarize(ctx context.Context, in *SummarizeRequest, opts ...grpc.CallOption) (*SummarizeResponse, error)
+	YoutubeTranscript(ctx context.Context, in *Video, opts ...grpc.CallOption) (*Transcript, error)
 }
 
 type pythonClient struct {
@@ -48,12 +49,22 @@ func (c *pythonClient) Summarize(ctx context.Context, in *SummarizeRequest, opts
 	return out, nil
 }
 
+func (c *pythonClient) YoutubeTranscript(ctx context.Context, in *Video, opts ...grpc.CallOption) (*Transcript, error) {
+	out := new(Transcript)
+	err := c.cc.Invoke(ctx, "/python.Python/YoutubeTranscript", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PythonServer is the server API for Python service.
 // All implementations must embed UnimplementedPythonServer
 // for forward compatibility
 type PythonServer interface {
 	Transcribe(context.Context, *TranscribeRequest) (*TranscribeResponse, error)
 	Summarize(context.Context, *SummarizeRequest) (*SummarizeResponse, error)
+	YoutubeTranscript(context.Context, *Video) (*Transcript, error)
 	mustEmbedUnimplementedPythonServer()
 }
 
@@ -66,6 +77,9 @@ func (UnimplementedPythonServer) Transcribe(context.Context, *TranscribeRequest)
 }
 func (UnimplementedPythonServer) Summarize(context.Context, *SummarizeRequest) (*SummarizeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Summarize not implemented")
+}
+func (UnimplementedPythonServer) YoutubeTranscript(context.Context, *Video) (*Transcript, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method YoutubeTranscript not implemented")
 }
 func (UnimplementedPythonServer) mustEmbedUnimplementedPythonServer() {}
 
@@ -116,6 +130,24 @@ func _Python_Summarize_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Python_YoutubeTranscript_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Video)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PythonServer).YoutubeTranscript(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/python.Python/YoutubeTranscript",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PythonServer).YoutubeTranscript(ctx, req.(*Video))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Python_ServiceDesc is the grpc.ServiceDesc for Python service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -130,6 +162,10 @@ var Python_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Summarize",
 			Handler:    _Python_Summarize_Handler,
+		},
+		{
+			MethodName: "YoutubeTranscript",
+			Handler:    _Python_YoutubeTranscript_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

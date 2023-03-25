@@ -38,7 +38,7 @@ var (
 	)
 )
 
-func NewAPIHTTPServer(config Config, apiServer *APIServer) *APIHTTPServer {
+func NewAPIHTTPServer(config Config, apiServer *Server) *APIHTTPServer {
 	twirpServer := genapi.NewAPIServer(apiServer, NewLoggingServerHooks(), twirp.WithServerPathPrefix("/api"))
 
 	var assets fs.FS

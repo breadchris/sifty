@@ -39,6 +39,7 @@ message Metadata {
 enum ContentType {
   TEXT = 0;
   AUDIO = 1;
+  URL = 2;
 }
 
 // Content has data and metadata

@@ -9,10 +9,6 @@ type AudioNormalizer struct {
 	client python.PythonClient
 }
 
-type Normalizer interface {
-	Normalize(fileName string) (transcript string, err error)
-}
-
 func (s *AudioNormalizer) Normalize(fileName string) (transcript string, err error) {
 	resp, err := s.client.Transcribe(context.Background(), &python.TranscribeRequest{
 		File: fileName,

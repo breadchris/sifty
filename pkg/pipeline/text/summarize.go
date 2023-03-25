@@ -3,31 +3,46 @@ package text
 import (
 	"context"
 	"github.com/breadchris/sifty/gen/python"
+	"github.com/google/wire"
+	"github.com/pkg/errors"
 	"os"
 )
 
-type Summarizer struct {
+var ProviderSet = wire.NewSet(
+	NewSummarizer,
+	wire.Bind(new(Summarizer), new(*summarizer)),
+)
+
+type Summarizer interface {
+	SummarizeFile(fileName string) (string, error)
+	SummarizeText(text string) (string, error)
+}
+
+type summarizer struct {
 	client python.PythonClient
 }
 
-func (s *Summarizer) Summarize(fileName string) (summary string, err error) {
+func (s *summarizer) SummarizeFile(fileName string) (string, error) {
 	content, err := os.ReadFile(fileName)
 	if err != nil {
-		return
+		return "", errors.Wrapf(err, "unable to read file %s", fileName)
 	}
-
-	resp, err := s.client.Summarize(context.Background(), &python.SummarizeRequest{
-		Content: string(content),
-	})
-	if err != nil {
-		return
-	}
-	summary = resp.Summary
-	return
+	return s.SummarizeText(string(content))
 }
 
-func NewSummarizer(client python.PythonClient) (*Summarizer, error) {
-	return &Summarizer{
+func (s *summarizer) SummarizeText(text string) (string, error) {
+	resp, err := s.client.Summarize(context.Background(), &python.SummarizeRequest{
+		Summarizer: python.Summarizer_BERT,
+		Content:    text,
+	})
+	if err != nil {
+		return "", errors.Wrapf(err, "unable to summarize text %s", text)
+	}
+	return resp.Summary, nil
+}
+
+func NewSummarizer(client python.PythonClient) (*summarizer, error) {
+	return &summarizer{
 		client: client,
 	}, nil
 }

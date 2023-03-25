@@ -2,37 +2,42 @@ package scrape
 
 import (
 	"crypto/tls"
-	"database/sql"
-	"github.com/PullRequestInc/go-gpt3"
+	"github.com/google/wire"
 	"net/http"
 	"strings"
 	"time"
-
-	"go.uber.org/fx"
 )
 
-var Module = fx.Options(
-	fx.Provide(
-		NewConfig,
-		NewScraper,
-	),
+var ProviderSet = wire.NewSet(
+	NewConfig,
+	NewScraper,
+	wire.Bind(new(Scraper), new(*scraper)),
 )
 
 type Scraper interface {
-}
-
-type scraperDeps struct {
-	fx.In
-	Config
-
-	DB           *sql.DB
-	OpenAIClient gpt3.Client
+	ScrapeWithChrome(url string) (*Response, error)
 }
 
 type scraper struct {
-	deps           scraperDeps
 	httpClient     *http.Client
 	browserDomains []string
+	config         Config
+}
+
+func NewScraper(config Config) *scraper {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	client := &http.Client{Timeout: time.Second * 5, Transport: tr}
+
+	parsedBrowserDomains := strings.Split(strings.ReplaceAll(config.BrowserDomains, " ", ""), ",")
+
+	return &scraper{
+		config:         config,
+		httpClient:     client,
+		browserDomains: parsedBrowserDomains,
+	}
 }
 
 //func (p *scraper) scrapeVulnerabilityReference(ref *ReferenceInfo) *model.ReferenceContent {
@@ -358,19 +363,3 @@ type scraper struct {
 //	}
 //	return nil
 //}
-
-func NewScraper(deps scraperDeps) Scraper {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	client := &http.Client{Timeout: time.Second * 5, Transport: tr}
-
-	parsedBrowserDomains := strings.Split(strings.ReplaceAll(deps.BrowserDomains, " ", ""), ",")
-
-	return &scraper{
-		deps:           deps,
-		httpClient:     client,
-		browserDomains: parsedBrowserDomains,
-	}
-}
